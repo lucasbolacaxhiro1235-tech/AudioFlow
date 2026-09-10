@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AudioFlow - Sua plataforma de áudio moderna. Descubra, organize e ouça suas músicas favoritas.">
+    <meta name="theme-color" content="#0d0d0d">
+    <title>AudioFlow - Seu áudio. Seu mundo.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header class="navbar" role="banner">
+            <div class="navbar-container">
+                <a href="/" class="navbar-logo" aria-label="AudioFlow - Página inicial">
+                    <svg class="logo-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+                        <path d="M10 16c0-3.314 2.686-6 6-6s6 2.686 6 6-2.686 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M16 10v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span class="logo-text">AudioFlow</span>
+                </a>
+
+                <nav class="navbar-menu" role="navigation" aria-label="Menu principal">
+                    <ul class="navbar-nav">
+                        <li><a href="/" class="nav-link active" data-page="home">Início</a></li>
+                        <li><a href="/explorar" class="nav-link" data-page="explorar">Explorar</a></li>
+                        <li><a href="/biblioteca" class="nav-link" data-page="biblioteca">Biblioteca</a></li>
+                        <li><a href="/playlists" class="nav-link" data-page="playlists">Playlists</a></li>
+                        <li><a href="/favoritos" class="nav-link" data-page="favoritos">Favoritos</a></li>
+                    </ul>
+                </nav>
+
+                <div class="navbar-search" role="search">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="search" class="search-input" placeholder="Buscar músicas, artistas, álbuns..." aria-label="Buscar" autocomplete="off">
+                    <div class="search-results" role="listbox" aria-label="Resultados da busca"></div>
+                </div>
+
+                <div class="navbar-actions">
+                    <button class="btn btn-ghost" id="theme-toggle" aria-label="Alternar tema">
+                        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+
+                    <div class="user-menu" id="user-menu">
+                        <button class="btn btn-primary" id="login-btn" aria-label="Entrar ou cadastrar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <span>Entrar</span>
+                        </button>
+                        <div class="user-dropdown" role="menu" aria-hidden="true">
+                            <div class="dropdown-header">
+                                <div class="user-avatar" id="user-avatar">U</div>
+                                <div class="user-info">
+                                    <span class="user-name" id="user-name">Usuário</span>
+                                    <span class="user-email" id="user-email">usuario@email.com</span>
+                                </div>
+                            </div>
+                            <hr class="dropdown-divider">
+                            <a href="/perfil" class="dropdown-item" role="menuitem">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Perfil
+                            </a>
+                            <a href="/configuracoes" class="dropdown-item" role="menuitem">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a2 2 0 0 1 2 2 2 2 0 0 1-2 2h.09a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                                Configurações
+                            </a>
+                            <hr class="dropdown-divider">
+                            <button class="dropdown-item dropdown-danger" id="logout-btn" role="menuitem">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="navbar-hamburger" aria-label="Abrir menu" aria-expanded="false" aria-controls="navbar-menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <main id="main-content" role="main">
+            <!-- Página Home -->
+            <section id="page-home" class="page active" data-page="home">
+                <div class="hero">
+                    <div class="hero-content">
+                        <h1 class="hero-title">Seu áudio.<br><span class="highlight">Seu mundo.</span></h1>
+                        <p class="hero-description">Descubra, organize e ouça suas músicas favoritas em uma plataforma moderna, rápida e feita para você.</p>
+                        <div class="hero-actions">
+                            <a href="/explorar" class="btn btn-primary btn-lg">Começar a ouvir</a>
+                            <a href="/explorar" class="btn btn-secondary btn-lg">Explorar</a>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-audio-visualizer" aria-hidden="true">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="features" aria-labelledby="features-title">
+                    <h2 id="features-title" class="section-title">Por que AudioFlow?</h2>
+                    <div class="features-grid">
+                        <article class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <h3>Biblioteca Ilimitada</h3>
+                            <p>Milhões de músicas, artistas e álbuns para descobrir e ouvir.</p>
+                        </article>
+                        <article class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                </svg>
+                            </div>
+                            <h3>Playlists Inteligentes</h3>
+                            <p>Crie, organize e compartilhe playlists personalizadas.</p>
+                        </article>
+                        <article class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                            </div>
+                            <h3>Qualidade Premium</h3>
+                            <p>Áudio em alta fidelidade com suporte a múltiplos formatos.</p>
+                        </article>
+                        <article class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                                    <path d="M8 21h8M12 17v4"/>
+                                </svg>
+                            </div>
+                            <h3>Offline First</h3>
+                            <p>Baixe suas músicas e ouça em qualquer lugar, sem internet.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="cta-section" aria-labelledby="cta-title">
+                    <div class="cta-card">
+                        <h2 id="cta-title">Pronto para começar?</h2>
+                        <p>Crie sua conta gratuita e tenha acesso a todos os recursos do AudioFlow.</p>
+                        <a href="#login" class="btn btn-primary btn-lg" id="cta-login">Criar conta grátis</a>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Página Explorar -->
+            <section id="page-explorar" class="page" data-page="explorar" aria-label="Explorar">
+                <div class="page-header">
+                    <h1>Explorar</h1>
+                    <p>Descubra novas músicas, artistas e playlists</p>
+                </div>
+
+                <div class="explore-filters" role="tablist" aria-label="Filtros de exploração">
+                    <button class="filter-tab active" role="tab" aria-selected="true" data-filter="populares">Populares</button>
+                    <button class="filter-tab" role="tab" aria-selected="false" data-filter="recentes">Recentes</button>
+                    <button class="filter-tab" role="tab" aria-selected="false" data-filter="artistas">Artistas</button>
+                    <button class="filter-tab" role="tab" aria-selected="false" data-filter="albuns">Álbuns</button>
+                    <button class="filter-tab" role="tab" aria-selected="false" data-filter="playlists">Playlists</button>
+                    <button class="filter-tab" role="tab" aria-selected="false" data-filter="categorias">Categorias</button>
+                </div>
+
+                <div class="explore-content" id="explore-content" role="tabpanel">
+                    <div class="content-section" data-section="populares">
+                        <div class="section-header">
+                            <h2>Músicas Populares</h2>
+                            <a href="#" class="view-all">Ver todas</a>
+                        </div>
+                        <div class="tracks-grid" id="popular-tracks" role="list"></div>
+                    </div>
+
+                    <div class="content-section hidden" data-section="recentes">
+                        <div class="section-header">
+                            <h2>Lançamentos Recentes</h2>
+                            <a href="#" class="view-all">Ver todas</a>
+                        </div>
+                        <div class="tracks-grid" id="recent-tracks" role="list"></div>
+                    </div>
+
+                    <div class="content-section hidden" data-section="artistas">
+                        <div class="section-header">
+                            <h2>Artistas em Destaque</h2>
+                            <a href="#" class="view-all">Ver todos</a>
+                        </div>
+                        <div class="artists-grid" id="featured-artists" role="list"></div>
+                    </div>
+
+                    <div class="content-section hidden" data-section="albuns">
+                        <div class="section-header">
+                            <h2>Álbuns Populares</h2>
+                            <a href="#" class="view-all">Ver todos</a>
+                        </div>
+                        <div class="albums-grid" id="popular-albums" role="list"></div>
+                    </div>
+
+                    <div class="content-section hidden" data-section="playlists">
+                        <div class="section-header">
+                            <h2>Playlists em Destaque</h2>
+                            <a href="#" class="view-all">Ver todas</a>
+                        </div>
+                        <div class="playlists-grid" id="featured-playlists" role="list"></div>
+                    </div>
+
+                    <div class="content-section hidden" data-section="categorias">
+                        <div class="section-header">
+                            <h2>Categorias</h2>
+                        </div>
+                        <div class="categories-grid" id="categories-grid" role="list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Página Biblioteca -->
+            <section id="page-biblioteca" class="page" data-page="biblioteca" aria-label="Biblioteca">
+                <div class="page-header">
+                    <h1>Biblioteca</h1>
+                    <p>Suas músicas, playlists e histórico</p>
+                </div>
+
+                <div class="library-tabs" role="tablist" aria-label="Seções da biblioteca">
+                    <button class="library-tab active" role="tab" aria-selected="true" data-library="musicas">Músicas</button>
+                    <button class="library-tab" role="tab" aria-selected="false" data-library="playlists">Playlists</button>
+                    <button class="library-tab" role="tab" aria-selected="false" data-library="historico">Histórico</button>
+                    <button class="library-tab" role="tab" aria-selected="false" data-library="baixadas">Baixadas</button>
+                </div>
+
+                <div class="library-content" id="library-content">
+                    <div class="library-panel active" data-panel="musicas">
+                        <div class="library-toolbar">
+                            <div class="library-sort">
+                                <label for="sort-musicas" class="visually-hidden">Ordenar por</label>
+                                <select id="sort-musicas" class="sort-select">
+                                    <option value="recent">Adicionadas recentemente</option>
+                                    <option value="alphabetical">Ordem alfabética</option>
+                                    <option value="artist">Artista</option>
+                                    <option value="album">Álbum</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tracks-list" id="library-tracks" role="list"></div>
+                    </div>
+
+                    <div class="library-panel hidden" data-panel="playlists">
+                        <div class="library-toolbar">
+                            <button class="btn btn-primary" id="create-playlist-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Nova Playlist
+                            </button>
+                        </div>
+                        <div class="playlists-grid" id="library-playlists" role="list"></div>
+                    </div>
+
+                    <div class="library-panel hidden" data-panel="historico">
+                        <div class="tracks-list" id="history-tracks" role="list"></div>
+                    </div>
+
+                    <div class="library-panel hidden" data-panel="baixadas">
+                        <div class="tracks-list" id="downloaded-tracks" role="list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Página Playlists -->
+            <section id="page-playlists" class="page" data-page="playlists" aria-label="Playlists">
+                <div class="page-header">
+                    <div>
+                        <h1>Playlists</h1>
+                        <p>Suas coleções de músicas</p>
+                    </div>
+                    <button class="btn btn-primary" id="new-playlist-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nova Playlist
+                    </button>
+                </div>
+
+                <div class="playlists-grid" id="all-playlists" role="list"></div>
+            </section>
+
+            <!-- Página Favoritos -->
+            <section id="page-favoritos" class="page" data-page="favoritos" aria-label="Favoritos">
+                <div class="page-header">
+                    <h1>Favoritos</h1>
+                    <p>Suas músicas e álbuns favoritos</p>
+                </div>
+
+                <div class="favorites-tabs" role="tablist" aria-label="Tipos de favoritos">
+                    <button class="favorite-tab active" role="tab" aria-selected="true" data-fav="musicas">Músicas</button>
+                    <button class="favorite-tab" role="tab" aria-selected="false" data-fav="albuns">Álbuns</button>
+                    <button class="favorite-tab" role="tab" aria-selected="false" data-fav="artistas">Artistas</button>
+                </div>
+
+                <div class="favorites-content">
+                    <div class="favorite-panel active" data-fav-panel="musicas">
+                        <div class="tracks-list" id="favorite-tracks" role="list"></div>
+                    </div>
+                    <div class="favorite-panel hidden" data-fav-panel="albuns">
+                        <div class="albums-grid" id="favorite-albums" role="list"></div>
+                    </div>
+                    <div class="favorite-panel hidden" data-fav-panel="artistas">
+                        <div class="artists-grid" id="favorite-artists" role="list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Modal Login/Register -->
+            <div class="modal-overlay" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
+                <div class="modal auth-modal">
+                    <button class="modal-close" aria-label="Fechar">&times;</button>
+                    <div class="auth-forms">
+                        <form class="auth-form active" id="login-form" aria-labelledby="login-title">
+                            <h2 id="login-title">Entrar no AudioFlow</h2>
+                            <div class="form-group">
+                                <label for="login-email">E-mail</label>
+                                <input type="email" id="login-email" name="email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Senha</label>
+                                <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                            <p class="auth-switch">Não tem conta? <a href="#" data-switch="register">Cadastre-se</a></p>
+                        </form>
+
+                        <form class="auth-form" id="register-form" aria-labelledby="register-title" hidden>
+                            <h2 id="register-title">Criar Conta</h2>
+                            <div class="form-group">
+                                <label for="register-name">Nome</label>
+                                <input type="text" id="register-name" name="name" required autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-email">E-mail</label>
+                                <input type="email" id="register-email" name="email" required autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="register-password">Senha</label>
+                                <input type="password" id="register-password" name="password" required minlength="8" autocomplete="new-password">
+                                <span class="form-hint">Mínimo 8 caracteres</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="register-confirm">Confirmar Senha</label>
+                                <input type="password" id="register-confirm" name="confirm" required autocomplete="new-password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Criar Conta</button>
+                            <p class="auth-switch">Já tem conta? <a href="#" data-switch="login">Entre</a></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Criar Playlist -->
+            <div class="modal-overlay" id="playlist-modal" role="dialog" aria-modal="true" aria-labelledby="playlist-modal-title" hidden>
+                <div class="modal playlist-modal">
+                    <button class="modal-close" aria-label="Fechar">&times;</button>
+                    <form id="playlist-form" aria-labelledby="playlist-modal-title">
+                        <h2 id="playlist-modal-title">Nova Playlist</h2>
+                        <div class="form-group">
+                            <label for="playlist-name">Nome da Playlist</label>
+                            <input type="text" id="playlist-name" name="name" required maxlength="100" placeholder="Minha playlist incrível">
+                        </div>
+                        <div class="form-group">
+                            <label for="playlist-description">Descrição (opcional)</label>
+                            <textarea id="playlist-description" name="description" rows="3" maxlength="500" placeholder="Descreva sua playlist..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="playlist-cover">Capa (opcional)</label>
+                            <input type="file" id="playlist-cover" name="cover" accept="image/*">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-playlist">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Criar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Toast Container -->
+            <div class="toast-container" id="toast-container" aria-live="polite" aria-label="Notificações"></div>
+        </main>
+
+        <!-- Player Fixo -->
+        <footer class="player-bar" role="region" aria-label="Player de áudio" id="player-bar">
+            <div class="player-track-info">
+                <div class="player-cover" id="player-cover">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="player-track-details">
+                    <span class="player-track-title" id="player-title">Nenhuma música tocando</span>
+                    <span class="player-track-artist" id="player-artist">Selecione uma música para começar</span>
+                </div>
+                <button class="btn-icon player-favorite" id="player-favorite" aria-label="Adicionar aos favoritos">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="player-controls">
+                <div class="player-control-group">
+                    <button class="btn-icon player-btn" id="player-shuffle" aria-label="Aleatório" title="Aleatório">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="16 3 21 3 21 8"/>
+                            <path d="M4 20l1.5-1.5L12 14 7 19 4 20z"/>
+                            <path d="M12 4v6l4 2-4 2v-6"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon player-btn" id="player-prev" aria-label="Anterior" title="Anterior">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polygon points="19 20 9 12 19 4 19 20"/>
+                            <line x1="5" y1="19" x2="5" y2="5"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon player-btn player-play-btn" id="player-play" aria-label="Reproduzir" title="Reproduzir">
+                        <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden>
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon player-btn" id="player-next" aria-label="Próxima" title="Próxima">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polygon points="5 4 15 12 5 20 5 4"/>
+                            <line x1="19" y1="5" x2="19" y2="19"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon player-btn" id="player-repeat" aria-label="Repetir" title="Repetir">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M4 12a8 8 0 0 1 8-8V0M12 0v8M20 12a8 8 0 0 1-8 8v8M12 24v-8"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="player-progress" role="slider" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+                    <span class="player-time current" id="player-current-time">0:00</span>
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                        <div class="progress-handle" id="progress-handle"></div>
+                    </div>
+                    <span class="player-time duration" id="player-duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-right">
+                <div class="player-volume" role="group" aria-label="Controle de volume">
+                    <button class="btn-icon player-btn" id="player-volume-btn" aria-label="Silenciar" title="Volume">
+                        <svg class="icon-volume-high" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        </svg>
+                        <svg class="icon-volume-low" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden>
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        </svg>
+                        <svg class="icon-volume-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden>
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                            <line x1="23" y1="9" x2="17" y2="15"/>
+                            <line x1="17" y1="9" x2="23" y2="15"/>
+                        </svg>
+                    </button>
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.8" aria-label="Volume">
+                </div>
+
+                <button class="btn-icon player-btn" id="player-queue" aria-label="Fila de reprodução" title="Fila">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M3 17V7c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <path d="M9 5v2M15 5v2M9 19v-2M15 19v-2"/>
+                    </svg>
+                </button>
+            </div>
+        </footer>
+
+        <!-- Queue Panel -->
+        <aside class="queue-panel" id="queue-panel" role="region" aria-label="Fila de reprodução" aria-hidden="true">
+            <div class="queue-header">
+                <h2>Próximas na fila</h2>
+                <button class="btn-icon" id="close-queue" aria-label="Fechar fila">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="queue-list" id="queue-list" role="list"></div>
+            <div class="queue-empty" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <p>A fila está vazia</p>
+                <button class="btn btn-primary" id="explore-from-queue">Explorar músicas</button>
+            </div>
+        </aside>
+    </div>
+
+    <audio id="audio-element" preload="metadata" crossorigin="anonymous"></audio>
+
+    <script src="script.js" type="module"></script>
+</body>
+</html>
