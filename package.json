@@ -1,0 +1,12 @@
+{
+  "name": "audioflow",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm run build",
+    "deploy": "cd frontend && npm ci && npm run build && cd .. && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.131.1"
+  }
+}
