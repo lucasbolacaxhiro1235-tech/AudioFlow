@@ -62,7 +62,7 @@ def _to_response(p: Playlist) -> PlaylistResponse:
             PlaylistItemResponse(
                 id=item.id,
                 position=item.position,
-                added_at=item.added_at,
+                added_at=item.created_at,
                 file=fr,
             )
         )

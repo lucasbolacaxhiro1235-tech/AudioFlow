@@ -27,6 +27,7 @@ MANIFEST
 
 # Virtual environments
 .venv/
+.venv_check/
 venv/
 env/
 ENV/
@@ -90,7 +91,10 @@ backend/uploads/
 backend/temp/
 backend/storage/
 storage/
+storage_test/
+storage_e2e/
 nginx/certs/
+backend/_e2e*.py
 frontend/assets/images/*.webp
 frontend/assets/images/*.avif
 frontend/dev-dist/

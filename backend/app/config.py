@@ -1,10 +1,11 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
     # Core
     APP_NAME: str = "AudioFlow"
     DEBUG: bool = False
@@ -70,11 +71,6 @@ class Settings(BaseSettings):
 
     # Anonymous / guest access (no login required)
     ALLOW_ANONYMOUS: bool = True
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
 
 
 @lru_cache()

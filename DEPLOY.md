@@ -1,247 +1,149 @@
-# Deploy do AudioFlow em VPS Linux
+# Deploy do AudioFlow
 
-Guia completo para colocar o AudioFlow em produção com `audioflow.com` e `api.audioflow.com`.
+Guia para colocar o AudioFlow em produção. A arquitetura inicial recomendada é:
 
-## Índice
+- **Frontend** → **Cloudflare Pages** (`https://audioflow.pages.dev`)
+- **Backend** → ambiente compatível com **FastAPI + Celery + FFmpeg** (Railway, Render, Fly.io ou uma VPS com Docker)
+- **Storage** → **Cloudflare R2** ou qualquer armazenamento S3-compatível
+- **Banco** → **PostgreSQL** (gerenciado no próprio host ou provedor)
+- **Fila** → **Redis**
 
-1. [Requisitos](#1-requisitos)
-2. [Comprar a VPS](#2-comprar-a-vps)
-3. [Configurar DNS](#3-configurar-dns)
-4. [Clonar o projeto](#4-clonar-o-projeto)
-5. [Configurar o .env](#5-configurar-o-env)
-6. [Executar com Docker Compose](#6-executar-com-docker-compose)
-7. [Configurar SSL com Let's Encrypt](#7-configurar-ssl-com-lets-encrypt)
-8. [Criar o primeiro administrador](#8-criar-o-primeiro-administrador)
-9. [Backup e restauração do PostgreSQL](#9-backup-e-restauração-do-postgresql)
-10. [Atualizar o sistema](#10-atualizar-o-sistema)
-11. [Troubleshooting](#11-troubleshooting)
+> Estado atual: o frontend funciona **sem login** (modo visitante anônimo). A autenticação está implementada no backend e preparada para ativação futura.
 
 ---
 
-## 1. Requisitos
+## Opção A — Frontend no Cloudflare Pages + Backend separado (recomendado)
 
-- Uma VPS Linux (Ubuntu 22.04/24.04 recomendado) com pelo menos **1 GB de RAM** e **20 GB de disco**.
-- Um domínio (`audioflow.com`).
-- Docker e Docker Compose instalados.
+### 1. Publicar o frontend no Cloudflare Pages
 
-## 2. Comprar a VPS
+O frontend é uma aplicação Vite/React. O endpoint da API é injetado em build pela variável de ambiente `VITE_API_BASE`.
 
-Sugestões: Hetzner, DigitalOcean, Vultr, Linode ou AWS Lightsail.
+1. No painel Cloudflare, crie um projeto **Pages → Connect to Git** e selecione o repositório.
+2. Configuração de build:
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Root directory**: `frontend`
+3. Variável de ambiente do projeto:
+   - `VITE_API_BASE` = `https://api.audioflow.pages.dev` (ou seu domínio de API)
+4. Domínio padrão: `audioflow.pages.dev`.
 
-1. Crie o servidor Ubuntu 22.04/24.04 LTS.
-2. Acesse via SSH:
+### 2. Publicar o backend
 
+Use qualquer plataforma que rode FastAPI + Celery + FFmpeg. Exemplos:
+
+**Railway / Render / Fly.io**:
+- Build: `pip install -r requirements.txt`
+- Start (API): `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Start (Worker): `celery -A app.workers.tasks worker --loglevel=info --queues=downloads`
+- Adicione PostgreSQL + Redis como plugins/serviços.
+
+**VPS com Docker** (conforme `docker-compose.yml`):
 ```bash
-ssh root@SEU_IP_DA_VPS
-```
-
-3. Instale o Docker:
-
-```bash
-curl -fsSL https://get.docker.com | sh
-systemctl enable --now docker
-```
-
-Verifique a instalação:
-
-```bash
-docker --version
-docker compose version
-```
-
-## 3. Configurar DNS
-
-No painel do seu registrador de domínio (Cloudflare, Namecheap, etc.), crie os registros apontando para o IP da VPS:
-
-| Tipo  | Nome    | Conteúdo         | TTL   |
-|-------|---------|------------------|-------|
-| A     | @       | SEU_IP_DA_VPS    | Auto  |
-| A     | www     | SEU_IP_DA_VPS    | Auto  |
-| A     | api     | SEU_IP_DA_VPS    | Auto  |
-
-Dica: se usar Cloudflare, você pode marcar o proxy (nuvem laranja). Para o `api`, deixe em **DNS only** (nuvem cinza) se quiser gerenciar o SSL com Certbot diretamente, ou use o SSL flexível da Cloudflare.
-
-## 4. Clonar o projeto
-
-```bash
-cd /opt
 git clone https://github.com/USUARIO/AudioFlow.git
 cd AudioFlow
-```
-
-## 5. Configurar o .env
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Preencha **obrigatoriamente**:
-
-```
-POSTGRES_PASSWORD=uma_senha_forte
-JWT_SECRET_KEY=uma_chave_aleatoria_longa
-FIRST_ADMIN_EMAIL=voce@exemplo.com
-FIRST_ADMIN_PASSWORD=senha_forte_do_admin
-```
-
-Ajuste os domínios:
-
-```
-FRONTEND_URL=https://audioflow.com
-API_BASE_URL=https://api.audioflow.com
-CORS_ORIGINS=https://audioflow.com,https://www.audioflow.com
-```
-
-Gere uma chave JWT segura:
-
-```bash
-openssl rand -hex 32
-```
-
-## 6. Executar com Docker Compose
-
-```bash
+cp .env.example .env    # edite
 docker compose up -d --build
 ```
 
-Verifique que tudo subiu:
+### 3. Configurar o Storage (R2)
+
+No `.env`, use o storage S3-compatível:
+
+```
+STORAGE_BACKEND=r2
+S3_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+S3_BUCKET=audioflow
+S3_PUBLIC_URL=https://pub-<hash>.r2.dev   # ou domínio público do bucket
+S3_REGION=auto
+```
+
+Se preferir não configurar R2 agora, use `STORAGE_BACKEND=local` (arquivos ficam no disco do backend).
+
+### 4. Variáveis de ambiente do backend
+
+| Variável | Descrição |
+|----------|-----------|
+| `DATABASE_URL` | PostgreSQL async (`postgresql+asyncpg://...`) |
+| `REDIS_URL` | URL do Redis |
+| `JWT_SECRET_KEY` | Chave aleatória longa |
+| `FRONTEND_URL` | `https://audioflow.pages.dev` |
+| `CORS_ORIGINS` | `https://audioflow.pages.dev` |
+| `STORAGE_BACKEND` | `local`, `s3` ou `r2` |
+| `STORAGE_PUBLIC_BASE_URL` | base pública dos arquivos (se `local`) |
+| `ALLOW_ANONYMOUS` | `true` = site sem login (padrão) |
+
+### 5. Ativar o login (futuro)
+
+Quando quiser exigir conta:
+1. Defina `ALLOW_ANONYMOUS=false`.
+2. Configure `SMTP_*` para e-mails de verificação/recuperação.
+3. No frontend, envolva as rotas com `<Protected />` novamente (o componente já existe em `src/components/Protected.tsx`).
+
+---
+
+## Opção B — Tudo em uma VPS (Docker Compose + Nginx)
+
+Para um deploy autocontido sem Cloudflare:
 
 ```bash
-docker compose ps
-docker compose logs -f backend
+apt update && apt install -y docker.io docker-compose-plugin
+git clone https://github.com/USUARIO/AudioFlow.git
+cd AudioFlow
+cp .env.example .env && nano .env
+docker compose up -d --build
 ```
 
-A estrutura sobe: `postgres`, `redis`, `backend`, `worker`, `frontend` e `nginx`.
-
-## 7. Configurar SSL com Let's Encrypt
-
-Instale o Certbot:
+O `nginx/nginx.conf` já faz o reverse proxy de `audioflow.com` → frontend e `api.audioflow.com` → backend. Para HTTPS com Let's Encrypt:
 
 ```bash
-apt update && apt install -y certbot
+apt install -y certbot
+certbot certonly --standalone -d audioflow.com -d api.audioflow.com
+# monte /etc/letsencrypt no container nginx (veja docker-compose.yml)
 ```
 
-Gere os certificados para os dois domínios:
+---
+
+## Criar o primeiro administrador
+
+O primeiro admin é criado automaticamente no boot, a partir de:
+
+```
+FIRST_ADMIN_EMAIL=admin@audioflow.com
+FIRST_ADMIN_PASSWORD=...
+```
+
+Depois acesse `https://audioflow.pages.dev/admin` e entre com essas credenciais para liberar o painel administrativo.
+
+---
+
+## Backup e restauração do PostgreSQL
 
 ```bash
-certbot certonly --standalone -d audioflow.com -d www.audioflow.com
-certbot certonly --standalone -d api.audioflow.com
-```
-
-> O modo `--standalone` precisa da porta 80 livre por alguns segundos. Pare o nginx temporariamente se necessário: `docker compose stop nginx`.
-
-Configure a renovação automática (Certbot instala um timer por padrão; verifique com `systemctl list-timers | grep certbot`).
-
-### Integrar SSL no Nginx
-
-Adicione os blocos SSL ao `nginx/nginx.conf` apontando para os certificados. Os certificados ficam em `/etc/letsencrypt/live/...`. Monte esse diretório no container nginx editando o `docker-compose.yml`:
-
-```yaml
-  nginx:
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-```
-
-E adicione no `nginx.conf`:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name audioflow.com www.audioflow.com;
-    ssl_certificate /etc/letsencrypt/live/audioflow.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/audioflow.com/privkey.pem;
-    location / { proxy_pass http://frontend:80; ... }
-}
-```
-
-Recarregue:
-
-```bash
-docker compose restart nginx
-```
-
-## 8. Criar o primeiro administrador
-
-O primeiro admin é criado automaticamente no primeiro boot, usando `FIRST_ADMIN_EMAIL` e `FIRST_ADMIN_PASSWORD` do `.env`.
-
-Se já subiu sem configurar, redefina o `.env`, reinicie e a conta será criada:
-
-```bash
-docker compose down
-# edite .env com FIRST_ADMIN_*
-docker compose up -d
-```
-
-Depois, acesse `https://audioflow.com/admin` e faça login com esse e-mail/senha.
-
-## 9. Backup e restauração do PostgreSQL
-
-### Backup
-
-```bash
+# backup
 docker compose exec -T postgres pg_dump -U audioflow audioflow > backup_$(date +%F).sql
-```
 
-Para automatizar com cron (backup diário às 03:00):
-
-```bash
-crontab -e
-# adicione:
-0 3 * * * cd /opt/AudioFlow && docker compose exec -T postgres pg_dump -U audioflow audioflow > /opt/backups/audioflow_$(date +\%F).sql
-```
-
-### Restaurar
-
-```bash
+# restauração
 cat backup_2026-01-01.sql | docker compose exec -T postgres psql -U audioflow audioflow
 ```
 
-## 10. Atualizar o sistema
+---
+
+## Atualizar
 
 ```bash
-cd /opt/AudioFlow
 git pull
 docker compose up -d --build
 docker compose exec backend alembic upgrade head
 docker compose restart worker
 ```
 
-## 11. Troubleshooting
-
-### Worker não processa downloads
-```bash
-docker compose logs -f worker
-# verificar Redis:
-docker compose exec redis redis-cli ping
-```
-
-### yt-dlp falha
-```bash
-docker compose exec backend pip install -U yt-dlp
-docker compose restart worker
-```
-
-### FFmpeg não encontrado
-Está instalado na imagem do backend. Em caso de problema, verifique:
-```bash
-docker compose exec backend ffmpeg -version
-```
-
-### Erros de CORS
-Confira `CORS_ORIGINS` no `.env` e certifique-se de que inclui o domínio exato do frontend.
-
-### Ver logs gerais
-```bash
-docker compose logs -f
-```
-
 ---
 
-## Acesso final
+## Troubleshooting
 
-- **Site**: https://audioflow.com
-- **API**: https://api.audioflow.com
-- **Docs da API**: https://api.audioflow.com/docs
-- **Admin**: https://audioflow.com/admin
+- **Worker não processa**: `docker compose logs -f worker`
+- **yt-dlp falha**: `docker compose exec backend pip install -U yt-dlp && docker compose restart worker`
+- **CORS**: confira `CORS_ORIGINS` (deve incluir `https://audioflow.pages.dev`).
+- **Arquivos não aparecem**: verifique `STORAGE_BACKEND` e se o bucket/domínio público do R2 está correto.
