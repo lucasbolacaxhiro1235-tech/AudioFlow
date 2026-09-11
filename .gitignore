@@ -88,5 +88,10 @@ Desktop.ini
 backend/alembic/versions/*.pyc
 backend/uploads/
 backend/temp/
+backend/storage/
+storage/
+nginx/certs/
 frontend/assets/images/*.webp
 frontend/assets/images/*.avif
+frontend/dev-dist/
+*.tsbuildinfo

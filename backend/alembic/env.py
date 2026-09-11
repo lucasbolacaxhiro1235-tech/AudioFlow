@@ -1,21 +1,20 @@
+import asyncio
+import os
+import sys
 from logging.config import fileConfig
+
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
-import sys
-import os
 
-# Adicionar o diretório backend ao path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app.config import settings
 from app.database import Base
-from app.models import __init__ as models  # noqa
+import app.models  # noqa: F401  (register models on Base.metadata)
 
 config = context.config
-
-# Override sqlalchemy.url from settings
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
@@ -58,7 +57,6 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    import asyncio
     asyncio.run(run_async_migrations())
 
 
