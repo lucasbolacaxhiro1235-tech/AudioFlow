@@ -24,7 +24,7 @@ async def _get_guest_user(db: AsyncSession, client_id: str) -> User:
         return existing
 
     user = User(
-        email=f"guest+{client_id}@audioflow.com",
+        email=f"guest+{client_id}@audioflow.pages.dev",
         name="Visitante",
         username=username,
         hashed_password=hash_password(uuid.uuid4().hex),

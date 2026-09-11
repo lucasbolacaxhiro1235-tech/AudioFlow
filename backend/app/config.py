@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_EMAIL: str = "no-reply@audioflow.com"
+    SMTP_FROM_EMAIL: str = "no-reply@example.com"
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = False
 

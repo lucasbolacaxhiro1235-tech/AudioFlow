@@ -24,7 +24,7 @@ O frontend é uma aplicação Vite/React. O endpoint da API é injetado em build
    - **Build output directory**: `dist`
    - **Root directory**: `frontend`
 3. Variável de ambiente do projeto:
-   - `VITE_API_BASE` = `https://api.audioflow.pages.dev` (ou seu domínio de API)
+   - `VITE_API_BASE` = `https://api.example.com` (troque pelo endereço real do seu backend)
 4. Domínio padrão: `audioflow.pages.dev`.
 
 ### 2. Publicar o backend
@@ -95,11 +95,11 @@ cp .env.example .env && nano .env
 docker compose up -d --build
 ```
 
-O `nginx/nginx.conf` já faz o reverse proxy de `audioflow.com` → frontend e `api.audioflow.com` → backend. Para HTTPS com Let's Encrypt:
+O `nginx/nginx.conf` já faz o reverse proxy do frontend e da API (ajuste `server_name` para seu domínio). Para HTTPS com Let's Encrypt:
 
 ```bash
 apt install -y certbot
-certbot certonly --standalone -d audioflow.com -d api.audioflow.com
+certbot certonly --standalone -d seu-dominio.com -d api.seu-dominio.com
 # monte /etc/letsencrypt no container nginx (veja docker-compose.yml)
 ```
 
@@ -110,7 +110,7 @@ certbot certonly --standalone -d audioflow.com -d api.audioflow.com
 O primeiro admin é criado automaticamente no boot, a partir de:
 
 ```
-FIRST_ADMIN_EMAIL=admin@audioflow.com
+FIRST_ADMIN_EMAIL=admin@example.com
 FIRST_ADMIN_PASSWORD=...
 ```
 
