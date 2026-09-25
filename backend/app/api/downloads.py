@@ -47,7 +47,6 @@ def _enqueue(download_id: uuid.UUID) -> bool:
 async def resolve(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
 ):
     await rate_limit(request, limit=30, window=60)
     body = await request.json()
