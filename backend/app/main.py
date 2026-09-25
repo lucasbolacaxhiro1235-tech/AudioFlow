@@ -91,6 +91,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- PREFLIGHT HANDLER FOR OPTIONS ---
+@app.middleware("http")
+async def handle_cors_preflight(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return JSONResponse(status_code=200, content={})
+    return await call_next(request)
+
 # --- BACKWARD COMPATIBILITY LAYER ---
 @app.post("/api/call")
 async def legacy_call(request: Request):
