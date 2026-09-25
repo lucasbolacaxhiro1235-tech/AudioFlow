@@ -11,22 +11,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Use /code to avoid any name collision with the 'app' package
-WORKDIR /code
+# Using /app as the base directory
+WORKDIR /app
 
+# Install dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the app package into /code/app
+# Copy only the 'app' package into /app/app
+# This ensures the structure is /app/app/main.py, /app/app/storage/base.py, etc.
 COPY backend/app ./app
 
-# Set the working directory to /code, so 'import app' works perfectly
-ENV PYTHONPATH=/code
+# Ensure Python can find the 'app' package regardless of where it's called from
+ENV PYTHONPATH=/app
 
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /code
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-# Start uvicorn. It will find the 'app' package in the current directory /code
+# Start uvicorn from /app, importing the package 'app' (located at /app/app)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
