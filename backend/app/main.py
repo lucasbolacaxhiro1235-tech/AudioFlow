@@ -26,26 +26,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 # ... (existing imports)
 from app.api import admin, auth, downloads, library, me, plans, playlists
 
-# --- BACKWARD COMPATIBILITY LAYER ---
-@app.post("/api/call")
-async def legacy_call(request: Request):
-    body = await request.json()
-    method = body.get("method")
-    args = body.get("args", [])
 
-    if method == "fetch_meta":
-        # Redireciona para a lógica de resolve do downloads
-        from app.services import metadata
-        url = args[0] if args else ""
-        return {"ok": True, "result": await metadata.resolve_url(url)}
-    
-    if method == "download":
-        # O download agora requer autenticação e payload específico, 
-        # então vamos disparar um erro claro se não estiver logado
-        return JSONResponse(status_code=400, content={"ok": False, "error": "Use a API de downloads moderna (/api/downloads)"})
-    
-    return JSONResponse(status_code=404, content={"ok": False, "error": f"Método {method} não suportado"})
-# ------------------------------------
+
 
 # ... (rest of the file)
 from app.config import cors_origins, settings
@@ -108,6 +90,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- BACKWARD COMPATIBILITY LAYER ---
+@app.post("/api/call")
+async def legacy_call(request: Request):
+    try:
+        body = await request.json()
+        method = body.get("method")
+        args = body.get("args", [])
+
+        if method == "fetch_meta":
+            from app.services import metadata
+            url = args[0] if args else ""
+            return {"ok": True, "result": await metadata.resolve_url(url)}
+        
+        if method == "download":
+            return JSONResponse(status_code=400, content={"ok": False, "error": "Use a API de downloads moderna (/api/downloads)"})
+        
+        return JSONResponse(status_code=404, content={"ok": False, "error": f"Método {method} não suportado"})
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"ok": False, "error": str(e)})
+# ------------------------------------
 
 
 @app.exception_handler(StarletteHTTPException)
