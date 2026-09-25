@@ -1,6 +1,20 @@
 import logging
+import os
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# DEBUG LOGS - These will appear in the Railway logs
+print("\n" + "="*50)
+print(f"DEBUG: Current Working Directory: {os.getcwd()}")
+print(f"DEBUG: sys.path: {sys.path}")
+try:
+    import os
+    print(f"DEBUG: Directory listing of root: {os.listdir('/')}")
+    print(f"DEBUG: Directory listing of /app: {os.listdir('/app')}")
+except Exception as e:
+    print(f"DEBUG: Error listing directories: {e}")
+print("="*50 + "\n")
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
