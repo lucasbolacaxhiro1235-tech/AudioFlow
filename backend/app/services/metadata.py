@@ -23,11 +23,11 @@ def _default_opts(**extra) -> dict:
         "noplaylist": False,
         "extract_flat": True,
         "skip_download": True,
-        "socket_timeout": 20,
+        "socket_timeout": 30,
         "cookiefile": settings.COOKIES_FILE,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "web"],
+                "player_client": ["android_music", "android", "web"],
             }
         },
     }
