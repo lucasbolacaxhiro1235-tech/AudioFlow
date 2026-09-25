@@ -44,16 +44,14 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    # Force the use of the DATABASE_URL from settings instead of alembic.ini
+    from sqlalchemy.ext.asyncio import create_async_engine
+    engine = create_async_engine(settings.DATABASE_URL, poolclass=pool.NullPool)
 
-    async with connectable.connect() as connection:
+    async with engine.begin() as connection:
         await connection.run_sync(do_run_migrations)
 
-    await connectable.dispose()
+    await engine.dispose()
 
 
 def run_migrations_online() -> None:
