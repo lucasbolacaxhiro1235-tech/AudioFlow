@@ -11,21 +11,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+# Use /code to avoid any name collision with the 'app' package
+WORKDIR /code
 
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the la content of 'app' folder to /app
-# This creates /app/main.py, /app/storage/base.py, etc.
-COPY backend/app/ .
+# Copy the app package into /code/app
+COPY backend/app ./app
 
-ENV PYTHONPATH=/app
+# Set the working directory to /code, so 'import app' works perfectly
+ENV PYTHONPATH=/code
 
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /code
 USER appuser
 
 EXPOSE 8000
 
-# Now main.py is in /app/main.py, so we call 'main:app'
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start uvicorn. It will find the 'app' package in the current directory /code
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
