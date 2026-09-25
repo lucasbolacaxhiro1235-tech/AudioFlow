@@ -1,9 +1,13 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+import os
 from app.config import settings
 
+# Force the use of the environment variable if it exists
+db_url = os.getenv("DATABASE_URL", settings.DATABASE_URL)
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_size=10,
