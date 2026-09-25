@@ -53,10 +53,12 @@ class Settings(BaseSettings):
     YTDLP_PATH: str = "yt-dlp"
     FFMPEG_PATH: str = "ffmpeg"
     FFPROBE_PATH: str = "ffprobe"
+    COOKIES_FILE: str = "cookies.txt"
     AUDIO_OUTPUT_FORMAT: str = "mp3"
     AUDIO_QUALITY: str = "192k"
     MAX_CONCURRENT_DOWNLOADS: int = 4
     MAX_DOWNLOAD_FILE_SIZE_MB: int = 200
+
 
     # Rate limiting
     RATE_LIMIT_REQUESTS: int = 120

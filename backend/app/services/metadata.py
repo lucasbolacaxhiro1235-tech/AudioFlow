@@ -24,9 +24,16 @@ def _default_opts(**extra) -> dict:
         "extract_flat": True,
         "skip_download": True,
         "socket_timeout": 20,
+        "cookiefile": settings.COOKIES_FILE,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"],
+            }
+        },
     }
     opts.update(extra)
     return opts
+
 
 
 async def resolve_url(url: str) -> dict[str, Any]:

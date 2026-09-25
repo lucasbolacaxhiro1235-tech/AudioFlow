@@ -148,8 +148,15 @@ class AudioProcessor:
             "no_warnings": True,
             "noplaylist": True,
             "socket_timeout": 30,
+            "cookiefile": settings.COOKIES_FILE,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"],
+                }
+            },
             "progress_hooks": [lambda d: self._hook(d, download_id)],
         }
+
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 ydl.extract_info(url, download=True)
