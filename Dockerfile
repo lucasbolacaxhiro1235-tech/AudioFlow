@@ -16,10 +16,11 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy ONLY the contents of the 'app' folder into the root /app
-COPY backend/app /app/app
+# Copy EVERYTHING from backend to /app
+COPY backend/ .
 
-# Ensure the directory /app is in the path
+# The app code is now in /app/app
+# We set PYTHONPATH to /app so that 'import app' resolves to /app/app
 ENV PYTHONPATH=/app
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -27,6 +28,6 @@ USER appuser
 
 EXPOSE 8000
 
-# Start uvicorn. Since /app is the WORKDIR and contains the folder 'app',
-# 'app.main:app' will correctly resolve to /app/app/main.py
+# Start uvicorn. We call the module 'app.main' 
+# which Python finds in /app/app/main.py thanks to PYTHONPATH
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
