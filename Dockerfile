@@ -11,23 +11,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# We set WORKDIR to / so that 'app' becomes a top-level package in the search path
-WORKDIR /
+# Standard project layout
+WORKDIR /app
 
-# Install dependencies in a temporary location to keep /app clean
-COPY backend/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# Copy requirements first
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the 'app' directory from backend to /app
-# This results in /app/main.py, /app/storage/base.py, etc.
-# But we want the package 'app' to be available, so we copy the folder 'app' into /
-COPY backend/app /app
+# Copy the entire backend folder contents into the current directory (/app)
+# This means /app/app/main.py will exist.
+COPY backend/ .
+
+# Set PYTHONPATH to /app so that 'import app' finds the /app/app folder
+ENV PYTHONPATH=/app
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-# Now the folder /app exists and contains main.py, etc.
-# Since the current directory is /, 'import app' finds the folder /app.
+# Run from /app, importing the 'app' package (which is /app/app)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
