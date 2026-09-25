@@ -11,18 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Using /app as the base directory
 WORKDIR /app
 
-# Install dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy only the 'app' package into /app/app
-# This ensures the structure is /app/app/main.py, /app/app/storage/base.py, etc.
+# Copy the 'app' directory from backend into the current WORKDIR (/app)
+# This creates the path /app/app/...
 COPY backend/app ./app
 
-# Ensure Python can find the 'app' package regardless of where it's called from
+# Set PYTHONPATH to the directory containing the 'app' folder
 ENV PYTHONPATH=/app
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -30,5 +28,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Start uvicorn from /app, importing the package 'app' (located at /app/app)
+# Start uvicorn from /app, referencing the 'app' package
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
