@@ -211,7 +211,7 @@ async def download_events(
     from app.schemas import TokenType
 
     token = request.query_params.get("token", "")
-    client_id = request.query_params.get("client_id", "")
+    client_id = request.headers.get("x-client-id") or request.query_params.get("client_id", "")
 
     user: User | None = None
     if token:
@@ -227,7 +227,10 @@ async def download_events(
             user = await _get_guest_user(db, client_id)
 
     if user is None or not user.is_active:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Not authenticated"
+        )
 
     download = await db.get(Download, download_id)
     if download is None or download.user_id != user.id:
