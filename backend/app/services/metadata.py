@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+import httpx
 from typing import Any, Optional
 
 from app.config import settings
@@ -35,6 +36,44 @@ def _default_opts(**extra) -> dict:
     return opts
 
 
+async def _resolve_via_invidious(url: str) -> dict[str, Any]:
+    """Fallback using Invidious API to bypass YouTube bot detection."""
+    instances = [
+        "https://invidious.snopyta.org",
+        "https://inv.tux.fi",
+        "https://invidious.flokinet.to",
+    ]
+    
+    video_id = None
+    match = re.search(r"(?:v=|\/embed\/|\/watch\?v=)([a-zA-Z0-9_-]{11})", url)
+    if match:
+        video_id = match.group(1)
+    
+    if not video_id:
+        return {"kind": "invalid", "error": "Não foi possível extrair o ID do vídeo para fallback"}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for instance in instances:
+            try:
+                logger.info(f"Trying Invidious fallback: {instance}")
+                resp = await client.get(f"{instance}/api/v1/videos/{video_id}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "kind": "track",
+                        "title": data.get("title"),
+                        "artist": data.get("author"),
+                        "album": "",
+                        "cover_url": data.get("videoThumbnails", [{}])[-1].get("url"),
+                        "duration": data.get("lengthSeconds", 0),
+                        "release_date": data.get("published"),
+                    }
+            except Exception as e:
+                logger.warning(f"Invidious instance {instance} failed: {e}")
+                continue
+    
+    return {"kind": "invalid", "error": "Todos os servidores de fallback falharam"}
+
 
 async def resolve_url(url: str) -> dict[str, Any]:
     import yt_dlp
@@ -50,7 +89,11 @@ async def resolve_url(url: str) -> dict[str, Any]:
         info = await asyncio.to_thread(_extract)
     except Exception as exc:
         error_msg = str(exc)
-        logger.error("Resolve failed detailed: %s", error_msg, exc_info=True)
+        logger.warning("yt-dlp failed: %s. Attempting Invidious fallback...", error_msg)
+        
+        if "sign in" in error_msg.lower() or "bot" in error_msg.lower():
+            return await _resolve_via_invidious(url)
+            
         return {"kind": "invalid", "error": f"Erro interno: {error_msg}"}
 
     if not info:
@@ -94,17 +137,14 @@ async def resolve_url(url: str) -> dict[str, Any]:
 
 def extract_metadata(url: str) -> dict[str, Any]:
     import yt_dlp
-
     try:
         with yt_dlp.YoutubeDL(_default_opts(skip_download=True)) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
         logger.warning("Metadata extraction failed: %s", exc)
         return {}
-
     if not info:
         return {}
-
     artist = (
         info.get("artist")
         or info.get("uploader")
