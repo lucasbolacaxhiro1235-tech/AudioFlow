@@ -49,8 +49,9 @@ async def resolve_url(url: str) -> dict[str, Any]:
     try:
         info = await asyncio.to_thread(_extract)
     except Exception as exc:
-        logger.warning("Resolve failed: %s", exc)
-        return {"kind": "invalid", "error": "Não foi possível resolver o link"}
+        error_msg = str(exc)
+        logger.error("Resolve failed detailed: %s", error_msg, exc_info=True)
+        return {"kind": "invalid", "error": f"Erro interno: {error_msg}"}
 
     if not info:
         return {"kind": "invalid", "error": "Nenhum conteúdo encontrado"}
