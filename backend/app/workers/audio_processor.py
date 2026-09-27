@@ -139,37 +139,30 @@ class AudioProcessor:
 
     def _download_audio(self, url: str, tmp_path: Path, download_id: uuid.UUID) -> Optional[Path]:
         import yt_dlp
-
+        from app.services.metadata import _default_opts
+        
         outtmpl = str(tmp_path / "%(title)s.%(ext)s")
-        opts = {
-            "format": "bestaudio/best",
-            "outtmpl": outtmpl,
-            "quiet": True,
-            "no_warnings": True,
-            "noplaylist": True,
-            "socket_timeout": 30,
-            "cookiefile": settings.COOKIES_FILE,
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"],
-                }
-            },
-            "progress_hooks": [lambda d: self._hook(d, download_id)],
-        }
-
+        opts = _default_opts(
+            format="bestaudio/best",
+            outtmpl=outtmpl,
+            noplaylist=True,
+            progress_hooks=[lambda d: self._hook(d, download_id)],
+        )
+        
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.extract_info(url, download=True)
+                ydl.download([url])
         except Exception as exc:
             logger.warning("yt-dlp failed for %s: %s", url, exc)
             return None
-
+        
         for candidate in tmp_path.iterdir():
             if candidate.is_file() and candidate.suffix.lower() in (
                 ".webm", ".m4a", ".mp3", ".opus", ".flac", ".wav", ".ogg", ".aac",
             ):
                 return candidate
         return None
+
 
     def _hook(self, d: dict, download_id: uuid.UUID) -> None:
         if d.get("status") == "downloading":
