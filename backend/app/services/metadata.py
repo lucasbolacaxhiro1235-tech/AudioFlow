@@ -75,6 +75,38 @@ async def _resolve_via_invidious(url: str) -> dict[str, Any]:
     return {"kind": "invalid", "error": "Todos os servidores de fallback falharam"}
 
 
+async def _search_youtube(query: str) -> dict[str, Any]:
+    """Search YouTube for the best matching track when direct resolve fails."""
+    import yt_dlp
+    logger.info(f"Performing enhanced search for: {query}")
+    
+    def _search() -> dict[str, Any]:
+        with yt_dlp.YoutubeDL(_default_opts(extract_flat=True)) as ydl:
+            return ydl.extract_info(f"ytsearch1:{query}", download=False)
+
+    try:
+        info = await asyncio.to_thread(_search)
+        if not info or not info.get("entries"):
+            return {"kind": "invalid", "error": "Nenhum resultado encontrado no YouTube"}
+        
+        entry = info["entries"][0]
+        with yt_dlp.YoutubeDL(_default_opts()) as ydl:
+            full_info = ydl.extract_info(entry.get("url") or entry.get("webpage_url"), download=False)
+            
+        return {
+            "kind": "track",
+            "title": full_info.get("title") or "Untitled",
+            "artist": full_info.get("artist") or full_info.get("uploader") or "Unknown",
+            "album": full_info.get("album") or "",
+            "cover_url": full_info.get("thumbnail") or "",
+            "duration": full_info.get("duration") or 0,
+            "release_date": full_info.get("release_date") or "",
+            "url": full_info.get("webpage_url"),
+        }
+    except Exception as e:
+        logger.error(f"Enhanced search failed: {e}")
+        return {"kind": "invalid", "error": f"Falha na busca: {str(e)}"}
+
 async def resolve_url(url: str) -> dict[str, Any]:
     import yt_dlp
 
@@ -89,15 +121,26 @@ async def resolve_url(url: str) -> dict[str, Any]:
         info = await asyncio.to_thread(_extract)
     except Exception as exc:
         error_msg = str(exc)
-        logger.warning("yt-dlp failed: %s. Attempting Invidious fallback...", error_msg)
+        logger.warning("Direct resolve failed: %s", error_msg)
         
-        if "sign in" in error_msg.lower() or "bot" in error_msg.lower():
-            return await _resolve_via_invidious(url)
+        if "spotify" in url.lower() or "sign in" in error_msg.lower() or "bot" in error_msg.lower():
+            inv_res = await _resolve_via_invidious(url)
+            if inv_res.get("kind") != "invalid":
+                return inv_res
+            return await _search_youtube(url)
             
         return {"kind": "invalid", "error": f"Erro interno: {error_msg}"}
 
     if not info:
         return {"kind": "invalid", "error": "Nenhum conteúdo encontrado"}
+
+    if "spotify" in url.lower() and info.get("extractor") == "spotify":
+        query = f"{info.get('artist', '')} {info.get('title', '')}".strip()
+        if query:
+            logger.info(f"Spotify metadata found. Searching YouTube for: {query}")
+            search_res = await _search_youtube(query)
+            if search_res.get("kind") != "invalid":
+                return search_res
 
     entries = info.get("entries") or []
     kind = info.get("_type") or "track"
