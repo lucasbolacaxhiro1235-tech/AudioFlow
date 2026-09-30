@@ -103,10 +103,20 @@ class AudioProcessor:
         quality: str,
         user_id: str,
     ) -> Optional[uuid.UUID]:
-        from app.services.metadata import extract_metadata
+        from app.services.metadata import extract_metadata, resolve_url
+        
+        # ANTI-DRM: If it's a Spotify link, resolve it to a YouTube link first
+        if "spotify" in url.lower():
+            logger.info(f"DRM Protection detected for {url}. Resolving to YouTube alternative...")
+            resolved = await resolve_url(url)
+            if resolved.get("kind") == "track" and "url" in resolved:
+                url = resolved["url"]
+                logger.info(f"Resolved Spotify to YouTube: {url}")
+            elif resolved.get("kind") == "invalid":
+                raise RuntimeError(f"Não foi possível encontrar uma versão sem DRM para este link: {resolved.get('error')}")
 
         meta = await asyncio.to_thread(extract_metadata, url)
-
+        
         self._publish(
             download_id,
             stage="downloading",
@@ -114,28 +124,29 @@ class AudioProcessor:
             artist=meta.get("artist"),
             cover_url=meta.get("cover_url"),
         )
-
+        
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             audio_path = await asyncio.to_thread(self._download_audio, url, tmp_path, download_id)
             if audio_path is None:
                 raise RuntimeError("Falha ao baixar o áudio")
-
+            
             self._publish(download_id, stage="converting")
             converted = await asyncio.to_thread(self._convert_audio, audio_path, tmp_path, fmt, quality)
             if converted is None:
                 raise RuntimeError("Falha na conversão de áudio")
-
+            
             self._publish(download_id, stage="tagging")
             cover_path = await asyncio.to_thread(self._download_cover, meta.get("cover_url"), tmp_path)
             if cover_path is not None:
                 await asyncio.to_thread(self._embed_cover, converted, cover_path, fmt)
-
+            
             self._publish(download_id, stage="uploading")
             file_id = await self._store_file(
                 download_id, converted, fmt, meta, user_id
             )
             return file_id
+
 
     def _download_audio(self, url: str, tmp_path: Path, download_id: uuid.UUID) -> Optional[Path]:
         import yt_dlp
