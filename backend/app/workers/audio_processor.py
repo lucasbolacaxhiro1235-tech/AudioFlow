@@ -105,23 +105,34 @@ class AudioProcessor:
     ) -> Optional[uuid.UUID]:
         from app.services.metadata import extract_metadata, resolve_url
         
-        # ANTI-DRM: If it's a Spotify link, resolve it to a YouTube link first
-        if "spotify" in url.lower():
-            logger.info(f"DRM Protection detected for {url}. Resolving to YouTube alternative...")
+        # ANTI-DRM: Force resolution of Spotify/Protected links to YouTube
+        if "spotify" in url.lower() or "soundcloud" in url.lower():
+            logger.info(f"DRM/Bot Protection detected for {url}. Resolving to YouTube...")
             resolved = await resolve_url(url)
+            
             if resolved.get("kind") == "track" and "url" in resolved:
                 url = resolved["url"]
-                logger.info(f"Resolved Spotify to YouTube: {url}")
+                logger.info(f"Resolved to track: {url}")
+            elif resolved.get("kind") in ("playlist", "album") and resolved.get("items"):
+                # Pick the first track from the album/playlist
+                first_item = resolved["items"][0]
+                url = first_item.get("url")
+                logger.info(f"Resolved album/playlist to first track: {url}")
             elif resolved.get("kind") == "invalid":
-                raise RuntimeError(f"Não foi possível encontrar uma versão sem DRM para este link: {resolved.get('error')}")
+                raise RuntimeError(f"Não foi possível encontrar uma versão sem DRM: {resolved.get('error')}")
+            else:
+                # If we couldn't find a specific URL but have a resolution, we might still fail later,
+                # but let's try to use whatever URL we have.
+                pass
 
+        # Now we have a (hopefully) YouTube URL, get metadata for it
         meta = await asyncio.to_thread(extract_metadata, url)
         
         self._publish(
             download_id,
             stage="downloading",
-            title=meta.get("title"),
-            artist=meta.get("artist"),
+            title=meta.get("title") or "Downloading...",
+            artist=meta.get("artist") or "Unknown",
             cover_url=meta.get("cover_url"),
         )
         
@@ -129,10 +140,10 @@ class AudioProcessor:
             tmp_path = Path(tmp)
             audio_path = await asyncio.to_thread(self._download_audio, url, tmp_path, download_id)
             if audio_path is None:
-                raise RuntimeError("Falha ao baixar o áudio")
+                raise RuntimeError("Falha ao baixar o áudio (O link pode estar protegido ou offline)")
             
             self._publish(download_id, stage="converting")
-            converted = await asyncio.to_thread(self._convert_audio, audio_path, tmp_path, fmt, quality)
+            converted = await asyncio.to_//thread(self._convert_audio, audio_path, tmp_path, fmt, quality)
             if converted is None:
                 raise RuntimeError("Falha na conversão de áudio")
             
