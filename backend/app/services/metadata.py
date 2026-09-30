@@ -119,7 +119,9 @@ async def resolve_url(url: str) -> dict[str, Any]:
         return {"kind": "invalid", "error": "URL inválida"}
 
     def _extract() -> dict[str, Any]:
-        with yt_dlp.YoutubeDL(_default_opts()) as ydl:
+        # Use a more aggressive set of options for initial resolution
+        opts = _default_opts(extract_flat=True)
+        with yt_dlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False)
 
     try:
@@ -128,6 +130,7 @@ async def resolve_url(url: str) -> dict[str, Any]:
         error_msg = str(exc)
         logger.warning("Direct resolve failed: %s", error_msg)
         
+        # Priority: Invidious Tunnel -> Enhanced Search
         if "spotify" in url.lower() or "sign in" in error_msg.lower() or "bot" in error_msg.lower():
             inv_res = await _resolve_via_invidious(url)
             if inv_res.get("kind") != "invalid":
@@ -139,8 +142,14 @@ async def resolve_url(url: str) -> dict[str, Any]:
     if not info:
         return {"kind": "invalid", "error": "Nenhum conteúdo encontrado"}
 
-    if "spotify" in url.lower() and info.get("extractor") == "spotify":
-        query = f"{info.get('artist', '')} {info.get('title', '')}".strip()
+    # IMPORTANT: For Spotify, if we got metadata but no direct YouTube URL, 
+    # we MUST trigger the enhanced search immediately to find a downloadable version.
+    if "spotify" in url.lower():
+        # Extract artist and title to search YouTube
+        artist = info.get("artist") or info.get("uploader") or info.get("channel") or ""
+        title = info.get("title") or info.get("fulltitle") or ""
+        query = f"{artist} {title}".strip()
+        
         if query:
             logger.info(f"Spotify metadata found. Searching YouTube for: {query}")
             search_res = await _search_youtube(query)
