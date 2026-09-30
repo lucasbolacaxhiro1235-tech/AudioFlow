@@ -37,11 +37,13 @@ def _default_opts(**extra) -> dict:
 
 
 async def _resolve_via_invidious(url: str) -> dict[str, Any]:
-    """Fallback using Invidious API to bypass YouTube bot detection."""
+    """Fallback using Invidious API to bypass YouTube bot detection and get direct stream URLs."""
     instances = [
         "https://invidious.snopyta.org",
         "https://inv.tux.fi",
         "https://invidious.flokinet.to",
+        "https://invidious.ivs.fi",
+        "https://yewtube.chat",
     ]
     
     video_id = None
@@ -52,10 +54,10 @@ async def _resolve_via_invidious(url: str) -> dict[str, Any]:
     if not video_id:
         return {"kind": "invalid", "error": "Não foi possível extrair o ID do vídeo para fallback"}
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
         for instance in instances:
             try:
-                logger.info(f"Trying Invidious fallback: {instance}")
+                logger.info(f"Trying Invidious Tunnel: {instance}")
                 resp = await client.get(f"{instance}/api/v1/videos/{video_id}")
                 if resp.status_code == 200:
                     data = resp.json()
@@ -67,12 +69,15 @@ async def _resolve_via_invidious(url: str) -> dict[str, Any]:
                         "cover_url": data.get("videoThumbnails", [{}])[-1].get("url"),
                         "duration": data.get("lengthSeconds", 0),
                         "release_date": data.get("published"),
+                        "direct_url": f"{instance}/latest_version?id={video_id}",
+                        "invidious_instance": instance,
+                        "video_id": video_id,
                     }
             except Exception as e:
                 logger.warning(f"Invidious instance {instance} failed: {e}")
                 continue
     
-    return {"kind": "invalid", "error": "Todos os servidores de fallback falharam"}
+    return {"kind": "invalid", "error": "Todos os servidores de tunelamento falharam"}
 
 
 async def _search_youtube(query: str) -> dict[str, Any]:
