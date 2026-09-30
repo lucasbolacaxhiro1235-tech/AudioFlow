@@ -63,6 +63,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
 
 
+# Triggering redeploy for verification
 app = FastAPI(
     title="AudioFlow API",
     description="Modern SaaS audio platform API — downloads, library and playlist management.",
